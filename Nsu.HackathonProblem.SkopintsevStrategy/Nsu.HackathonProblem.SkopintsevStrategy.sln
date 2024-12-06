@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35222.181
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nsu.HackathonProblem.SkopintsevStrategy", "Nsu.HackathonProblem.SkopintsevStrategy\Nsu.HackathonProblem.SkopintsevStrategy.csproj", "{27F74D0B-B6D4-4D2B-B2D4-BD49891334CE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nsu.HackathonProblem.Contracts", "Nsu.HackathonProblem.Contracts\Nsu.HackathonProblem.Contracts\Nsu.HackathonProblem.Contracts.csproj", "{6C82041A-C1FA-4C4C-A6AC-DE07DF184B3F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{27F74D0B-B6D4-4D2B-B2D4-BD49891334CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{27F74D0B-B6D4-4D2B-B2D4-BD49891334CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{27F74D0B-B6D4-4D2B-B2D4-BD49891334CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{27F74D0B-B6D4-4D2B-B2D4-BD49891334CE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6C82041A-C1FA-4C4C-A6AC-DE07DF184B3F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C82041A-C1FA-4C4C-A6AC-DE07DF184B3F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C82041A-C1FA-4C4C-A6AC-DE07DF184B3F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C82041A-C1FA-4C4C-A6AC-DE07DF184B3F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CF3A4D32-BD98-4BA4-AB11-0A98FD472414}
+	EndGlobalSection
+EndGlobal
