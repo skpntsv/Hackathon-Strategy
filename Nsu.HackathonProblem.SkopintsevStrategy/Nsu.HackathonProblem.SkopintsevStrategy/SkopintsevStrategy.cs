@@ -4,41 +4,64 @@ namespace Nsu.HackathonProblem.SkopintsevStrategy;
 
 public class SkopintsevStrategy : ITeamBuildingStrategy
 {
+    private readonly Random _rnd = new();
+
     public IEnumerable<Team> BuildTeams(IEnumerable<Employee> teamLeads, IEnumerable<Employee> juniors, 
         IEnumerable<Wishlist> teamLeadsWishlists, IEnumerable<Wishlist> juniorsWishlists)
     {
         var leaders = teamLeads.ToList();
         var juniorsList = juniors.ToList();
-
         var leaderPrefs = teamLeadsWishlists.ToDictionary(w => w.EmployeeId, w => w.DesiredEmployees);
         var juniorPrefs = juniorsWishlists.ToDictionary(w => w.EmployeeId, w => w.DesiredEmployees);
 
-        var compatibilityMatrix = CreateCompatibilityMatrix(leaders, juniorsList, leaderPrefs, juniorPrefs);
+        var n = leaders.Count;
 
-        var hungarianAssignments = HungarianAlgorithm.HungarianAlgorithm.FindAssignments(compatibilityMatrix);
-        var greedyAssignments = SolveGreedy(compatibilityMatrix);
+        List<int[]> initialSolutions = GenerateMultipleStarts(leaders, juniorsList, leaderPrefs, juniorPrefs, n);
 
-        var bestAssignments = CompareAssignments(hungarianAssignments, greedyAssignments, leaders, juniorsList, leaderPrefs, juniorPrefs);
+        var bestSolution = initialSolutions
+            .OrderByDescending(sol => CalculateHarmonicMean(sol, leaders, juniorsList, leaderPrefs, juniorPrefs))
+            .First();
 
-        var optimizedAssignments = OptimizeWithLocalSearch(bestAssignments, leaders, juniorsList, leaderPrefs, juniorPrefs);
+        var optimizedSolution = GlobalOptimize(bestSolution, leaders, juniorsList, leaderPrefs, juniorPrefs);
 
-        return CreateTeams(leaders, juniorsList, optimizedAssignments);
+        return CreateTeams(leaders, juniorsList, optimizedSolution);
     }
 
-    private int[,] CreateCompatibilityMatrix(List<Employee> leaders, List<Employee> juniors,
-        Dictionary<int, int[]> leaderPrefs, Dictionary<int, int[]> juniorPrefs)
+    private List<int[]> GenerateMultipleStarts(List<Employee> leaders, List<Employee> juniors,
+        Dictionary<int, int[]> leaderPrefs, Dictionary<int, int[]> juniorPrefs, int n)
     {
-        int n = leaders.Count;
-        var matrix = new int[n, n];
+        var solutions = new List<int[]>();
 
-        for (int i = 0; i < n; i++)
+        for (var i = 0; i < 5; i++)
         {
-            for (int j = 0; j < n; j++)
-            {
-                int leaderScore = GetPreferenceScore(leaderPrefs, leaders[i].Id, juniors[j].Id);
-                int juniorScore = GetPreferenceScore(juniorPrefs, juniors[j].Id, leaders[i].Id);
+            // Добавляем шум в матрицу
+            var noisyMatrix = CreateNoisyCompatibilityMatrix(leaders, juniors, leaderPrefs, juniorPrefs, i);
+            var hungarian = HungarianAlgorithm.HungarianAlgorithm.FindAssignments(noisyMatrix);
+            var greedy = SolveGreedy(noisyMatrix);
 
-                matrix[i, j] = -(leaderScore + juniorScore);
+            solutions.Add(hungarian);
+            solutions.Add(greedy);
+        }
+
+        return solutions;
+    }
+
+    private int[,] CreateNoisyCompatibilityMatrix(List<Employee> leaders, List<Employee> juniors,
+        Dictionary<int, int[]> leaderPrefs, Dictionary<int, int[]> juniorPrefs, int seed)
+    {
+        var n = leaders.Count;
+        var matrix = new int[n, n];
+        var noiseFactor = 0.1; // 10% шума
+
+        for (var i = 0; i < n; i++)
+        {
+            for (var j = 0; j < n; j++)
+            {
+                var leaderScore = GetPreferenceScore(leaderPrefs, leaders[i].Id, juniors[j].Id);
+                var juniorScore = GetPreferenceScore(juniorPrefs, juniors[j].Id, leaders[i].Id);
+
+                // Добавляем небольшой шум
+                matrix[i, j] = -(leaderScore + juniorScore + _rnd.Next((int)(-noiseFactor * 10), (int)(noiseFactor * 10)));
             }
         }
 
@@ -49,7 +72,7 @@ public class SkopintsevStrategy : ITeamBuildingStrategy
     {
         if (!preferences.ContainsKey(participantId)) return 1;
         var prefList = preferences[participantId];
-        int index = Array.IndexOf(prefList, partnerId);
+        var index = Array.IndexOf(prefList, partnerId);
         return index >= 0 ? prefList.Length - index : 1;
     }
 
@@ -78,22 +101,14 @@ public class SkopintsevStrategy : ITeamBuildingStrategy
         return assignments;
     }
 
-    private int[] CompareAssignments(int[] hungarian, int[] greedy, List<Employee> leaders, List<Employee> juniors,
-        Dictionary<int, int[]> leaderPrefs, Dictionary<int, int[]> juniorPrefs)
-    {
-        var hungarianScore = CalculateHarmonicMean(hungarian, leaders, juniors, leaderPrefs, juniorPrefs);
-        var greedyScore = CalculateHarmonicMean(greedy, leaders, juniors, leaderPrefs, juniorPrefs);
-
-        return hungarianScore > greedyScore ? hungarian : greedy;
-    }
-
-    private int[] OptimizeWithLocalSearch(int[] assignments, List<Employee> leaders, List<Employee> juniors,
+    private int[] GlobalOptimize(int[] assignments, List<Employee> leaders, List<Employee> juniors,
         Dictionary<int, int[]> leaderPrefs, Dictionary<int, int[]> juniorPrefs)
     {
         var improved = true;
         var n = assignments.Length;
+        var noImprovementCount = 0;
 
-        while (improved)
+        while (improved && noImprovementCount < 10)
         {
             improved = false;
 
@@ -110,8 +125,11 @@ public class SkopintsevStrategy : ITeamBuildingStrategy
                     if (!(newScore > currentScore)) continue;
                     assignments = newAssignments;
                     improved = true;
+                    noImprovementCount = 0;
                 }
             }
+
+            noImprovementCount++;
         }
 
         return assignments;
